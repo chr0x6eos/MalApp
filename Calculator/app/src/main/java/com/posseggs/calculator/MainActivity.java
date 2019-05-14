@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonSub:
                 setNumber(1,Integer.parseInt(calculation.getText().toString()));
                 operation = sub;
-                clearText();
+                setOperationText();
                 break;
             case R.id.buttonMulti:
                 setNumber(1,Integer.parseInt(calculation.getText().toString()));
@@ -90,6 +90,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.buttonClear:
                 clearText();
                 break;
+            case R.id.buttonSave:
+                //TODO: Write result to file
+                break;
+            case R.id.buttonLoad:
+                //TODO: Load result to file
+                break;
             //Default get result
             default:
                 //If first number has been defined
@@ -98,12 +104,20 @@ public class MainActivity extends AppCompatActivity {
                     //If an operation has been set
                     if (operation != null)
                     {
-                        try {
-                            String num2 = calculation.getText().toString();
-                            num2 = num2.substring(num2.indexOf(operation));
-                            setNumber(2, Integer.parseInt(num2));
+                        try
+                        {
+                            //Get second value
+                            String value2 = calculation.getText().toString();
+                            value2 = value2.substring(value2.lastIndexOf(operation) + 1);
+                            //Set second value
+                            setNumber(2, Integer.parseInt(value2));
                             //Calculate result
-                            calculation.setText(caclResult());
+                            calculation.setText(caclResult() + "");
+                            //Reset numbers
+                            num1 = caclResult();
+                            num2 = null;
+                            operation = null;
+                            break;
                         }
                         catch (Exception ex)
                         {
