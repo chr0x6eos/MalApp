@@ -1,5 +1,9 @@
 package com.posseggs.calculator;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -8,14 +12,14 @@ import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
-    //Calculation ids
+    //textViewCalc ids
+    public static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 18351;
     public static final String add = "+";
     public static final String sub = "-";
     public static final String multi = "*";
     public static final String div = "/";
 
-
-    TextView calculation;
+    TextView textViewCalc;
     String operation;
     Integer num1 = null;
     Integer num2 = null;
@@ -25,7 +29,17 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        this.calculation = findViewById(R.id.textViewCalculator);
+        this.textViewCalc = findViewById(R.id.textViewCalculator);
+
+        checkForPermission();
+    }
+
+    private void checkForPermission()
+    {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
+        }
     }
 
     public void onClick(View view)
@@ -35,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
             //Switch through numbers
             case R.id.button0:
                 updateText(0);
+                break;
             case R.id.button1:
                 updateText(1);
                 break;
@@ -62,95 +77,122 @@ public class MainActivity extends AppCompatActivity {
             case R.id.button9:
                 updateText(9);
                 break;
+
+            //Set numbers and the operation to calculate
             case R.id.buttonAdd:
-                setNumber(1, Integer.parseInt(calculation.getText().toString()));
-                operation = add;
-                setOperationText();
+                caseOperation(add);
                 break;
             case R.id.buttonSub:
-                setNumber(1,Integer.parseInt(calculation.getText().toString()));
-                operation = sub;
-                setOperationText();
+                caseOperation(sub);
                 break;
             case R.id.buttonMulti:
-                setNumber(1,Integer.parseInt(calculation.getText().toString()));
-                operation = multi;
-                setOperationText();
+                caseOperation(multi);
                 break;
             case R.id.buttonDiv:
-                setNumber(1,Integer.parseInt(calculation.getText().toString()));
-                operation = div;
-                setOperationText();
+                caseOperation(div);
                 break;
+
+            //Clear input fully
             case R.id.buttonClearAll:
                 clearText();
-                num1=null;
-                num2=null;
+                resetVars();
                 break;
+            //Clear input partially
             case R.id.buttonClear:
-                clearText();
+                delChar();
                 break;
+
+            //Save current number to file as variable
             case R.id.buttonSave:
-                //TODO: Write result to file
-                break;
+                try {
+                    if (operation == null) {
+                        num1 = Integer.parseInt(textViewCalc.getText().toString());
+                        //Save output to output
+                        if (!FileIOHelper.saveToFile(num1.toString())) {
+                            showError("Could not save!");
+                        }
+                    } else {
+                        showError("You can only save one number!");
+                    }
+                } catch (Exception ex) {
+                    showError("Could not save! " + ex.getMessage());
+                } finally {
+                    break;
+                }
+                //Load variable to file
             case R.id.buttonLoad:
-                //TODO: Load result to file
-                break;
-            //Default get result
+                try {
+                    String out = FileIOHelper.readFile(this);
+                    if (textViewCalc.getText().toString() != "")
+                        textViewCalc.setText(textViewCalc.getText().toString() + out);
+                    else
+                        textViewCalc.setText(out);
+                } catch (Exception ex) {
+                    showError("Could not read! " + ex.getMessage());
+                } finally {
+                    break;
+                }
+
+                //Default: Get result of operation
             default:
-                //If first number has been defined
-                if (num1 != null)
-                {
-                    //If an operation has been set
-                    if (operation != null)
+                //If an operation has been set
+                if (operation != null)
+                {//If first number has been defined
+                    if (num1 != null)
                     {
                         try
                         {
                             //Get second value
-                            String value2 = calculation.getText().toString();
+                            String value2 = textViewCalc.getText().toString();
                             value2 = value2.substring(value2.lastIndexOf(operation) + 1);
                             //Set second value
-                            setNumber(2, Integer.parseInt(value2));
-                            //Calculate result
-                            calculation.setText(caclResult() + "");
-                            //Reset numbers
-                            num1 = caclResult();
-                            num2 = null;
-                            operation = null;
+                            if (!value2.isEmpty())
+                            {
+                                setNumber(2, Integer.parseInt(value2));
+                                //Calculate result
+                                int result = calcResult();
+                                textViewCalc.setText(result + "");
+                                //Reset numbers
+                                resetVars();
+                                num1 = result;
+                            }
+                            else
+                            {
+                                showError("You did not define the second number!");
+                            }
                             break;
                         }
                         catch (Exception ex)
                         {
-                            Toast.makeText(this,"Could not calculate: " + ex.getMessage(),Toast.LENGTH_LONG).show();
+                            showError("Could not calculate: " + ex.getMessage());
                         }
                     }
                     else
                     {
-                        Toast.makeText(this,"You did not define an operation!",Toast.LENGTH_LONG).show();
+                        showError("You did not define a number!");
                     }
                 }
                 else
                 {
-                    Toast.makeText(this,"You did not define a number!",Toast.LENGTH_LONG).show();
+                    showError("You did not define an operation!");
                 }
         }
     }
 
+    //Update textView to number
     private void updateText(int num)
     {
-        calculation.setText(calculation.getText().toString()+num);
+        textViewCalc.setText(textViewCalc.getText().toString() + num);
     }
 
-    private void setOperationText()
+    //Do logic if an operation button was pressed:
+    //Set num1 and operation and update textView
+    private void caseOperation(String operation)
     {
-        calculation.setText(calculation.getText().toString()+operation);
+        setOperation(operation);
     }
 
-    private void clearText()
-    {
-        calculation.setText("");
-    }
-
+    //Set var num1/2
     private void setNumber(int which, int number)
     {
         if (which==1)
@@ -163,9 +205,50 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private int caclResult()
+    private void setOperation(String newOp)
     {
-        switch (operation) {
+        if (textViewCalc.getText().length() > 0)
+        {
+            String text = textViewCalc.getText().toString();
+
+            if (operation == null) {
+                operation = newOp;
+                setNumber(1, Integer.parseInt(text));
+                setOperationText();
+            }
+            else
+            {
+                //When the textView does not contain any operation set new one
+                if (!textViewCalc.getText().toString().contains(operation))
+                {
+                    operation = newOp;
+                    setNumber(1, Integer.parseInt(text));
+                    setOperationText();
+                }
+            }
+        }
+        else
+        {
+            showError("You have not specified a number!");
+        }
+    }
+
+    private void setOperationText()
+    {
+        textViewCalc.setText(textViewCalc.getText().toString()+operation);
+    }
+
+    //Clear textView
+    private void clearText()
+    {
+        textViewCalc.setText("");
+    }
+
+    //Calc result depending on operation
+    private int calcResult()
+    {
+        switch (operation)
+        {
             case add:
                 return num1+num2;
             case sub:
@@ -175,5 +258,27 @@ public class MainActivity extends AppCompatActivity {
             default:
                 return num1*num2;
         }
+    }
+    private void resetVars()
+    {
+        num1 = null;
+        num2 = null;
+        operation = null;
+    }
+
+    private void delChar()
+    {
+        int length = textViewCalc.length();
+        //If characters are there to delete
+        if (length > 0)
+        {
+            String text = textViewCalc.getText().subSequence(0, textViewCalc.getText().length() - 1).toString();
+            textViewCalc.setText(text);
+        }
+    }
+
+    private void showError(String error)
+    {
+        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
 }
