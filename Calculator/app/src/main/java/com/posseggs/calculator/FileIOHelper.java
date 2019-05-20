@@ -19,15 +19,15 @@ public class FileIOHelper {
     public static String readFile() throws FileNotFoundException {
         String line = null;
         BufferedReader reader = null;
-        FileInputStream inputStream = null;
-        InputStreamReader inputReader = null;
+        FileInputStream is = null;
+        InputStreamReader irs = null;
 
         try
         {
             //Read from file
-            inputStream = new FileInputStream (new File(Environment.getExternalStorageDirectory(), fileName));
-            inputReader = new InputStreamReader(inputStream);
-            reader = new BufferedReader(inputReader);
+            is = new FileInputStream (new File(Environment.getExternalStorageDirectory(), fileName));
+            irs = new InputStreamReader(is);
+            reader = new BufferedReader(irs);
             line = reader.readLine(); //Read the only line from the file
         }
         catch(FileNotFoundException ex)
@@ -46,10 +46,10 @@ public class FileIOHelper {
                 //Close resources
                 if (reader != null)
                     reader.close();
-                if (inputStream != null)
-                    inputStream.close();
-                if (inputReader != null)
-                    inputReader.close();
+                if (is != null)
+                    is.close();
+                if (irs != null)
+                    irs.close();
             }
             catch (Exception ex)
             {
@@ -61,17 +61,17 @@ public class FileIOHelper {
 
     public static boolean saveToFile(String data)
     {
-        FileOutputStream fOut = null;
+        FileOutputStream fos = null;
 
         try
         {
             //Create new file
-            File file = new File(Environment.getExternalStorageDirectory(), fileName);
-            file.createNewFile();
+            File f = new File(Environment.getExternalStorageDirectory(), fileName);
+            f.createNewFile();
 
             //Write to file
-            fOut = new FileOutputStream(file,false);
-            fOut.write((data + System.getProperty("line.separator")).getBytes());
+            fos = new FileOutputStream(f,false);
+            fos.write((data + System.getProperty("line.separator")).getBytes());
 
             //Return true if no error occurred
             return true;
@@ -89,8 +89,8 @@ public class FileIOHelper {
             try
             {
                 //Close resources
-                if (fOut != null)
-                    fOut.close();
+                if (fos != null)
+                    fos.close();
             }
             catch (Exception ex)
             {
