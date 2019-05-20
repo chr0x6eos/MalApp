@@ -1,6 +1,5 @@
 package com.posseggs.calculator;
 
-import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
@@ -14,66 +13,67 @@ import java.io.InputStreamReader;
 
 public class FileIOHelper {
 
-    final static String fileName = "data.txt";
-    //final static String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/calculator/data" ;
-    final static String TAG = "FILEIO";
+    final static String fileName = "calculation.txt";
+    final static String TAG = "FileIO";
 
-    public static String readFile(Context context) {
-
+    public static String readFile() throws FileNotFoundException {
         String line = null;
+        BufferedReader reader = null;
+        FileInputStream inputStream = null;
+        InputStreamReader inputReader = null;
 
         try
         {
-            FileInputStream fileInputStream = new FileInputStream (new File(Environment.getExternalStorageDirectory(), fileName));//path + "/" +  fileName));
-            InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-            line = bufferedReader.readLine();
-
-            bufferedReader.close();
+            //Read from file
+            inputStream = new FileInputStream (new File(Environment.getExternalStorageDirectory(), fileName));
+            inputReader = new InputStreamReader(inputStream);
+            reader = new BufferedReader(inputReader);
+            line = reader.readLine(); //Read the only line from the file
         }
         catch(FileNotFoundException ex)
         {
             Log.d(TAG, ex.getMessage());
+            throw ex;
         }
         catch(IOException ex)
         {
             Log.d(TAG, ex.getMessage());
         }
+        finally
+        {
+            try
+            {
+                //Close resources
+                if (reader != null)
+                    reader.close();
+                if (inputStream != null)
+                    inputStream.close();
+                if (inputReader != null)
+                    inputReader.close();
+            }
+            catch (Exception ex)
+            {
+                throw new IllegalArgumentException("Could not close resources!");
+            }
+        }
         return line;
     }
 
-    public static boolean saveToFile(String data) {
+    public static boolean saveToFile(String data)
+    {
+        FileOutputStream fOut = null;
+
         try
         {
-            /*
-            File directory = new File(path);
-            File file;
-            if (!directory.exists())
-            {
-                if (!directory.mkdir())
-                { //Create file without directory
-                    file = new File(fileName);
-                    file.createNewFile();
-                }
-                else
-                { //Create file with directory
-                    file = new File(path + "/" + fileName);
-                    file.createNewFile();
-                }
-            }
-            else
-            { //Create file with directory
-                file = new File(path + "/" + fileName);
-                file.createNewFile();
-            }
-            */
-
+            //Create new file
             File file = new File(Environment.getExternalStorageDirectory(), fileName);
             file.createNewFile();
 
-            FileOutputStream fileOutputStream = new FileOutputStream(file,false);
-            fileOutputStream.write((data + System.getProperty("line.separator")).getBytes());
+            //Write to file
+            fOut = new FileOutputStream(file,false);
+            fOut.write((data + System.getProperty("line.separator")).getBytes());
 
+            //Return true if no error occurred
             return true;
         }
         catch(FileNotFoundException ex)
@@ -84,6 +84,20 @@ public class FileIOHelper {
         {
             Log.d(TAG, ex.getMessage());
         }
+        finally
+        {
+            try
+            {
+                //Close resources
+                if (fOut != null)
+                    fOut.close();
+            }
+            catch (Exception ex)
+            {
+                throw new IllegalArgumentException("Could not close resources!");
+            }
+        }
+        //Return false if error occurred
         return  false;
     }
 }

@@ -10,9 +10,11 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+
 public class MainActivity extends AppCompatActivity {
 
-    //textViewCalc ids
+    //IDs
     public static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 18351;
     public static final String add = "+";
     public static final String sub = "-";
@@ -30,22 +32,21 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         this.textViewCalc = findViewById(R.id.textViewCalculator);
-
+        //Check for permissions for fileIO and ask for them if not existing
         checkForPermission();
     }
 
     private void checkForPermission()
     {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-        {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
-        }
     }
 
     public void onClick(View view)
     {
-        switch (view.getId()) {
-
+        //Check which button was pressed
+        switch (view.getId())
+        {
             //Switch through numbers
             case R.id.button0:
                 updateText(0);
@@ -97,70 +98,92 @@ public class MainActivity extends AppCompatActivity {
                 clearText();
                 resetVars();
                 break;
-            //Clear input partially
+            //Delete last input
             case R.id.buttonClear:
-                delChar();
+                del();
                 break;
 
-            //Save current number to file as variable
+            //FileIO
+            //Save current number to a file
             case R.id.buttonSave:
-                try {
-                    if (operation == null) {
-                        num1 = Integer.parseInt(textViewCalc.getText().toString());
+                try
+                {
+                    if (operation == null)
+                    {
+                        setNumber(1,textViewCalc.getText().toString());
                         //Save output to output
-                        if (!FileIOHelper.saveToFile(num1.toString())) {
+                        if (!FileIOHelper.saveToFile(num1.toString()))
                             showError("Could not save!");
-                        }
-                    } else {
+                    }
+                    else
+                    {
                         showError("You can only save one number!");
                     }
-                } catch (Exception ex) {
+                }
+                catch (NumberFormatException ex)
+                {
+                    showError("Could not save! The number you try to save is invalid!");
+                }
+                catch (Exception ex)
+                {
                     showError("Could not save! " + ex.getMessage());
-                } finally {
+                }
+                finally
+                {
                     break;
                 }
                 //Load variable to file
             case R.id.buttonLoad:
-                try {
-                    String out = FileIOHelper.readFile(this);
+                try
+                {
+                    String out = FileIOHelper.readFile();
                     if (textViewCalc.getText().toString() != "")
                         textViewCalc.setText(textViewCalc.getText().toString() + out);
                     else
                         textViewCalc.setText(out);
-                } catch (Exception ex) {
+                }
+                catch (FileNotFoundException noFileEX)
+                {                                                               //Hide detailed exMessage
+                    showError("No file was found! Try saving a number first! ");// + noFileEX.getMessage());
+                }
+                catch (Exception ex)
+                {
                     showError("Could not read! " + ex.getMessage());
-                } finally {
+                }
+                finally
+                {
                     break;
                 }
 
-                //Default: Get result of operation
+            //Default: Get result of operation
             default:
                 //If an operation has been set
                 if (operation != null)
-                {//If first number has been defined
+                {
+                    //If first number has been defined
                     if (num1 != null)
                     {
                         try
                         {
-                            //Get second value
+                            //Get second number
                             String value2 = textViewCalc.getText().toString();
                             value2 = value2.substring(value2.lastIndexOf(operation) + 1);
-                            //Set second value
+
                             if (!value2.isEmpty())
                             {
-                                setNumber(2, Integer.parseInt(value2));
+                                //Set second number
+                                setNumber(2, value2);
                                 //Calculate result
                                 int result = calcResult();
                                 textViewCalc.setText(result + "");
-                                //Reset numbers
+                                //Reset numbers and operation
                                 resetVars();
-                                num1 = result;
+                                num1 = result; //Set first number to the result
                             }
                             else
                             {
                                 showError("You did not define the second number!");
                             }
-                            break;
                         }
                         catch (Exception ex)
                         {
@@ -192,29 +215,50 @@ public class MainActivity extends AppCompatActivity {
         setOperation(operation);
     }
 
-    //Set var num1/2
-    private void setNumber(int which, int number)
+    //Set var num1 or num2
+    private void setNumber(int which, String input)
     {
-        if (which==1)
+        try
         {
-            num1 = number;
+            int number = Integer.parseInt(input);
+
+            if (which == 1) //Which number -> num1 or num2
+                num1 = number;
+            else
+                num2 = number;
         }
-        else
+        catch (NumberFormatException ex)
         {
-            num2 = number;
+            throw ex;
         }
     }
 
+    //Set the calculation operation to the newOperation
     private void setOperation(String newOp)
     {
+        //If input was made
         if (textViewCalc.getText().length() > 0)
         {
             String text = textViewCalc.getText().toString();
-
-            if (operation == null) {
+            //No operation has been set before
+            if (operation == null)
+            {
                 operation = newOp;
-                setNumber(1, Integer.parseInt(text));
-                setOperationText();
+                try
+                {
+                    setNumber(1, text);
+                    setOperationText();
+                }
+                catch (NumberFormatException ex)
+                {
+                    showError("Invalid number inputted!");
+                    //clearText();
+                }
+                catch (Exception ex)
+                {
+                    showError("Input is not valid!");
+                    //clearText();
+                }
             }
             else
             {
@@ -222,9 +266,23 @@ public class MainActivity extends AppCompatActivity {
                 if (!textViewCalc.getText().toString().contains(operation))
                 {
                     operation = newOp;
-                    setNumber(1, Integer.parseInt(text));
-                    setOperationText();
+                    try
+                    {
+                        setNumber(1, text);
+                        setOperationText();
+                    }
+                    catch (NumberFormatException ex)
+                    {
+                        showError("Invalid number inputted!");
+                        //clearText();
+                    }
+                    catch (Exception ex)
+                    {
+                        showError("Input is not valid!");
+                        //clearText();
+                    }
                 }
+                //else do not set new operation
             }
         }
         else
@@ -233,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Write operation to current calculation text
     private void setOperationText()
     {
         textViewCalc.setText(textViewCalc.getText().toString()+operation);
@@ -259,6 +318,8 @@ public class MainActivity extends AppCompatActivity {
                 return num1*num2;
         }
     }
+
+    //Set all calculation vars to null
     private void resetVars()
     {
         num1 = null;
@@ -266,7 +327,8 @@ public class MainActivity extends AppCompatActivity {
         operation = null;
     }
 
-    private void delChar()
+    //Delete last inputted char
+    private void del()
     {
         int length = textViewCalc.length();
         //If characters are there to delete
@@ -277,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Show error messages with Toast
     private void showError(String error)
     {
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
