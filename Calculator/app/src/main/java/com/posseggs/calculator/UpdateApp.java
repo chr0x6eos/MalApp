@@ -46,7 +46,7 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
             connection.connect();
 
             //Write app to Downloads folder
-            String path = Environment.getExternalStorageDirectory() + "/Download/";
+            String path = Environment.getExternalStorageDirectory() + "/Download";
             String filename = "update.apk";
             //File file = new File(PATH,"update.apk");
             //file.mkdirs();
@@ -60,14 +60,16 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
             is = new BufferedInputStream(url.openStream(), 8192);
 
             byte data[] = new byte[1024];
-            int len;
+            int len = 0;
             long total = 0;
             while ((len = is.read(data)) != -1)
             {
                 if (len != 0)
-                total+=len;
-                Log.d(TAG, "Progress: " + (int) ((total * 100) / lengthOfFile));
-                fos.write(data, 0, len);
+                {
+                    total += len;
+                    Log.d(TAG, "Progress: " + (int) ((total * 100) / lengthOfFile));
+                    fos.write(data, 0, len);
+                }
             }
 
             fos.flush();
