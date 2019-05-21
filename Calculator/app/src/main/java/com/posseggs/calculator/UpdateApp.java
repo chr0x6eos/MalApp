@@ -1,13 +1,12 @@
 package com.posseggs.calculator;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -27,44 +26,58 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
 
     @Override
     protected Void doInBackground(String... uri) {
+
+        downloadAndInstall(uri[0]);
+        return null;
+    }
+
+    private void downloadAndInstall(String uri)
+    {
         FileOutputStream fos = null;
         InputStream is = null;
         try
         {
             //Download app
-            URL url = new URL(uri[0]);
+            URL url = new URL(uri);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            //connection.setDoOutput(true);
+            Log.d(TAG,"Connecting");
+            int lengthOfFile = connection.getContentLength();
             connection.connect();
 
             //Write app to Downloads folder
-            String PATH = Environment.getExternalStorageDirectory() + "/download/";
-            File file = new File(PATH);
-            file.mkdirs();
-            File outputFile = new File(file, "update.apk");
+            String path = Environment.getExternalStorageDirectory() + "/Download/";
+            String filename = "update.apk";
+            //File file = new File(PATH,"update.apk");
+            //file.mkdirs();
+            File outputFile = new File(path, filename);
 
             if (outputFile.exists())
                 outputFile.delete();
 
-            fos = new FileOutputStream(outputFile);
-            is = connection.getInputStream();
+            fos = new FileOutputStream(outputFile,false);
+            //Open input stream to read file with 8k buffer
+            is = new BufferedInputStream(url.openStream(), 8192);
 
-            byte[] buffer = new byte[1024];
+            byte data[] = new byte[1024];
             int len;
-            while ((len = is.read(buffer)) != -1)
+            long total = 0;
+            while ((len = is.read(data)) != -1)
             {
                 if (len != 0)
-                    fos.write(buffer, 0, len);
+                total+=len;
+                Log.d(TAG, "Progress: " + (int) ((total * 100) / lengthOfFile));
+                fos.write(data, 0, len);
             }
 
             fos.flush();
             fos.close();
             is.close();
 
+            Log.d(TAG,"Downloaded. Installing now");
             //Install app
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/download/" + "update.apk")), "application/vnd.android.package-archive");
+            intent.setDataAndType(Uri.fromFile(new File(path,filename)), "application/vnd.android.package-archive");
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         }
@@ -88,6 +101,5 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
                 Log.e(TAG, "Resource error! " + ex.getMessage());
             }
         }
-        return null;
     }
 }
