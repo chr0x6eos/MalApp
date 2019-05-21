@@ -11,7 +11,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 
 public class UpdateApp extends AsyncTask<String,Void,Void> {
@@ -67,7 +69,7 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
                 if (len != 0)
                 {
                     total += len;
-                    Log.d(TAG, "Progress: " + (int) ((total * 100) / lengthOfFile));
+                    Log.d(TAG, "Downloading: " + (int) ((total * 100) / lengthOfFile) + "%");
                     fos.write(data, 0, len);
                 }
             }
@@ -77,11 +79,28 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
             is.close();
 
             Log.d(TAG,"Downloaded. Installing now");
-            //Install app
+
+            //Set app path
+            File app = new File(path,filename);
+            Uri fileUri = Uri.fromFile(app);
+            if (Build.VERSION.SDK_INT >= 24) //Newer skd needs other uri
+            {
+                fileUri = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", app);
+            }
+
+            //Start installation intent
             Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setDataAndType(Uri.fromFile(new File(path,filename)), "application/vnd.android.package-archive");
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setDataAndType(fileUri, "application/vnd.android.package-archive");
+
+            //Set flags for intent
+            intent.putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            //Prompt user to install app
             context.startActivity(intent);
+
+
         }
         catch (Exception ex)
         {

