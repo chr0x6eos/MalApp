@@ -55,7 +55,6 @@
         app:layout_constraintTop_toBottomOf="@+id/buttonAdd" />
 
     <Button
-        android:onClick="onClick"
         android:id="@+id/buttonResult"
         android:layout_width="91dp"
         android:layout_height="140dp"
@@ -64,9 +63,10 @@
         android:layout_marginTop="20dp"
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
+        android:onClick="onClick"
         android:text="="
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.375"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/button3"
         app:layout_constraintTop_toBottomOf="@+id/buttonLoad" />
 
@@ -207,53 +207,49 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:onClick="onClick"
         android:id="@+id/buttonClearAll"
-        android:layout_width="wrap_content"
+        android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginStart="16dp"
         android:layout_marginLeft="16dp"
         android:layout_marginTop="28dp"
+        android:onClick="onClick"
         android:text="AC"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textViewCalculator" />
 
     <Button
-        android:onClick="onClick"
         android:id="@+id/buttonClear"
-        android:layout_width="wrap_content"
+        android:layout_width="60dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="28dp"
+        android:onClick="onClick"
         android:text="C"
         app:layout_constraintStart_toEndOf="@+id/buttonClearAll"
         app:layout_constraintTop_toBottomOf="@+id/textViewCalculator" />
 
     <Button
-        android:onClick="onClick"
         android:id="@+id/buttonLoad"
         android:layout_width="wrap_content"
         android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginLeft="12dp"
         android:layout_marginTop="28dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:text="Load"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.272"
+        android:onClick="onClick"
+        android:text="Load from file"
         app:layout_constraintStart_toEndOf="@+id/buttonSave"
         app:layout_constraintTop_toBottomOf="@+id/textViewCalculator" />
 
     <Button
-        android:onClick="onClick"
         android:id="@+id/buttonSave"
         android:layout_width="wrap_content"
         android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
         android:layout_marginTop="28dp"
+        android:onClick="onClick"
         android:text="Save"
         app:layout_constraintStart_toEndOf="@+id/buttonClear"
         app:layout_constraintTop_toBottomOf="@+id/textViewCalculator" />

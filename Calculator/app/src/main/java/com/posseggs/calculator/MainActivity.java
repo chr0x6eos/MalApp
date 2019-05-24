@@ -2,8 +2,10 @@ package com.posseggs.calculator;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -31,11 +33,12 @@ public class MainActivity extends AppCompatActivity {
     public static final String UPDATED = "UPDATED";
 
     TextView textViewCalc;
-    String operation;
-    Integer num1 = null;
-    Integer num2 = null;
 
     private boolean updated = false;
+
+    //Calculation class
+    Calculator calc;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,8 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
         this.textViewCalc = findViewById(R.id.textViewCalculator);
         //Check for permissions for fileIO and ask for them if not existing
-        askForPermission();
-
+        calc = new Calculator(this,textViewCalc);
+        checkPermissions();
 
         /*
         if(!serviceRunning())
@@ -69,24 +72,33 @@ public class MainActivity extends AppCompatActivity {
     */
 
     //Ask for permission if not given
-    private void askForPermission()
+    private void checkPermissions()
     {
+        //Permissions were not given yet
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
+            //Ask for permissions
             new AlertDialog.Builder(this)
                     .setMessage("This app needs storage permissions to function! Please give the needed permissions!")
                     .setTitle("Permissions needed!")                                      //If yes give permissions
                     .setPositiveButton("OK", (DialogInterface dialog, int which) -> ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE))
-                    .setNegativeButton("Cancel", (DialogInterface dialog, int which) -> this.finish())
+                    .setNegativeButton("Cancel", (DialogInterface dialog, int which) -> permissionDeniedAlert())
                     .create()
                     .show();
+        }
+        else //Permissions already given
+        {
+            //Check for update
+            checkForUpdateOnStartUp();
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_CODE_WRITE_EXTERNAL_STORAGE: {
+        switch (requestCode)
+        {
+            case REQUEST_CODE_WRITE_EXTERNAL_STORAGE:
+                {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     //Permission granted
@@ -94,20 +106,25 @@ public class MainActivity extends AppCompatActivity {
                     checkForUpdateOnStartUp();
                 }
                 else
-                {
-                    //Permissions denied. Ask again
-                    new AlertDialog.Builder(this)
-                            .setMessage("This app needs storage permissions to function! Are you sure you don't want to give permissions? Without the permissions the app cannot run and will close automatically!")
-                            .setTitle("Permissions needed!")
-                            .setPositiveButton("Yes", (DialogInterface dialog, int which) -> this.finish()) //End app
-                            .setNegativeButton("No", (DialogInterface dialog, int which) -> askForPermission()) //Ask again
-                            .create()
-                            .show();
+                {   //Alert user that only with permissions will run
+                    permissionDeniedAlert();
                 }
                 return;
             }
             // next case ... and so on
         }
+    }
+
+    private void permissionDeniedAlert()
+    {
+        //Permissions denied. Ask again
+        new AlertDialog.Builder(this)
+                .setMessage("This app needs storage permissions to function! Are you sure you don't want to give permissions? Without the permissions the app cannot run and will close automatically!")
+                .setTitle("Permissions needed!")
+                .setPositiveButton("Yes", (DialogInterface dialog, int which) -> this.finish()) //End app
+                .setNegativeButton("No", (DialogInterface dialog, int which) -> checkPermissions()) //Ask again
+                .create()
+                .show();
     }
 
     //Check if updated is true and if not ask the user to update app
@@ -121,7 +138,9 @@ public class MainActivity extends AppCompatActivity {
 
         //If newest app is not installed ask for update
         if (!updated)
-            askForUpdate();
+            askForUpdate(); //Ask to install update
+        else
+           showNewAppUsage(); //Ask to uninstall current app and use new one
     }
 
     //Set updated to value depending on installation of malapp
@@ -143,12 +162,11 @@ public class MainActivity extends AppCompatActivity {
 
         try
         {
-
             packageManager.getPackageInfo(packageName, 0);
             found = true;
         }
-        catch (PackageManager.NameNotFoundException e) {
-
+        catch (PackageManager.NameNotFoundException e)
+        {
             found = false;
         }
 
@@ -167,6 +185,25 @@ public class MainActivity extends AppCompatActivity {
                     .create()
                     .show();
         }
+    }
+
+    private void showNewAppUsage()
+    {
+        new AlertDialog.Builder(this)
+                .setMessage("The newer version of this app is already downloaded! The old old version will be uninstalled now.")
+                .setTitle("Newer version installed!")                                      //If yes download update
+                .setPositiveButton("Ok", (DialogInterface dialog, int which) -> uninstall())
+                //.setNegativeButton("", (DialogInterface dialog, int which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
+
+    private void uninstall()
+    {
+        //Ask to uninstall current app
+        Intent intent = new Intent(Intent.ACTION_DELETE);
+        intent.setData(Uri.parse("package:"+this.getPackageName()));
+        startActivity(intent);
     }
 
     //Download and install app
@@ -206,300 +243,136 @@ public class MainActivity extends AppCompatActivity {
         //Check which button was pressed
         switch (view.getId())
         {
+            //Case number was pressed
             //Switch through numbers
             case R.id.button0:
-                updateText(0);
+                calc.updateText(0);
                 break;
             case R.id.button1:
-                updateText(1);
+                calc.updateText(1);
                 break;
             case R.id.button2:
-                updateText(2);
+                calc.updateText(2);
                 break;
             case R.id.button3:
-                updateText(3);
+                calc.updateText(3);
                 break;
             case R.id.button4:
-                updateText(4);
+                calc.updateText(4);
                 break;
             case R.id.button5:
-                updateText(5);
+                calc.updateText(5);
                 break;
             case R.id.button6:
-                updateText(6);
+                calc.updateText(6);
                 break;
             case R.id.button7:
-                updateText(7);
+                calc.updateText(7);
                 break;
             case R.id.button8:
-                updateText(8);
+                calc.updateText(8);
                 break;
             case R.id.button9:
-                updateText(9);
+                calc.updateText(9);
                 break;
 
+            //Case operation buttons were pressed
             //Set numbers and the operation to calculate
             case R.id.buttonAdd:
-                caseOperation(add);
+                calc.caseOperation(add);
                 break;
             case R.id.buttonSub:
-                caseOperation(sub);
+                calc.caseOperation(sub);
                 break;
             case R.id.buttonMulti:
-                caseOperation(multi);
+                calc.caseOperation(multi);
                 break;
             case R.id.buttonDiv:
-                caseOperation(div);
+                calc.caseOperation(div);
                 break;
 
+            //Case clear buttons were pressed
             //Clear input fully
             case R.id.buttonClearAll:
-                clearText();
-                resetVars();
+                calc.clearText();
+                calc.resetVars();
                 break;
             //Delete last input
             case R.id.buttonClear:
-                del();
+                calc.del();
                 break;
 
-            //FileIO
+
+            //Case a fileIO button was pressed
             //Save current number to a file
             case R.id.buttonSave:
-                try
-                {
-                    if (operation == null)
-                    {
-                        setNumber(1,textViewCalc.getText().toString());
-                        //Save output to output
-                        if (!FileIOHelper.saveToFile(num1.toString()))
-                            showError("Could not save!");
-                    }
-                    else
-                    {
-                        showError("You can only save one number!");
-                    }
-                }
-                catch (NumberFormatException ex)
-                {
-                    showError("Could not save! The number you try to save is invalid!");
-                }
-                catch (Exception ex)
-                {
-                    showError("Could not save! " + ex.getMessage());
-                }
-                finally
-                {
+                    saveNum();
                     break;
-                }
-                //Load variable to file
+
+            //Load variable to file
             case R.id.buttonLoad:
-                try
-                {
-                    String out = FileIOHelper.readFile();
-                    if (textViewCalc.getText().toString() != "")
-                        textViewCalc.setText(textViewCalc.getText().toString() + out);
-                    else
-                        textViewCalc.setText(out);
-                }
-                catch (FileNotFoundException noFileEX)
-                {                                                               //Hide detailed exMessage
-                    showError("No file was found! Try saving a number first! ");// + noFileEX.getMessage());
-                }
-                catch (Exception ex)
-                {
-                    showError("Could not read! " + ex.getMessage());
-                }
-                finally
-                {
-                    break;
-                }
+                loadNum();
+                break;
 
-            //Default: Get result of operation
+            //Case result was pressed
+            //Default: Get output
             default:
-                //If an operation has been set
-                if (operation != null)
-                {
-                    //If first number has been defined
-                    if (num1 != null)
-                    {
-                        try
-                        {
-                            //Get second number
-                            String value2 = textViewCalc.getText().toString();
-                            value2 = value2.substring(value2.lastIndexOf(operation) + 1);
-
-                            if (!value2.isEmpty())
-                            {
-                                //Set second number
-                                setNumber(2, value2);
-                                //Calculate result
-                                int result = calcResult();
-                                textViewCalc.setText(result + "");
-                                //Reset numbers and operation
-                                resetVars();
-                                num1 = result; //Set first number to the result
-                            }
-                            else
-                            {
-                                showError("You did not define the second number!");
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            showError("Could not calculate: " + ex.getMessage());
-                        }
-                    }
-                    else
-                    {
-                        showError("You did not define a number!");
-                    }
-                }
-                else
-                {
-                    showError("You did not define an operation!");
-                }
+                //Make the calculator do the calculation
+                calc.calcOutput();
         }
     }
 
-    //Update textView to number
-    private void updateText(int num)
-    {
-        textViewCalc.setText(textViewCalc.getText().toString() + num);
-    }
-
-    //Do logic if an operation button was pressed:
-    //Set num1 and operation and update textView
-    private void caseOperation(String operation)
-    {
-        setOperation(operation);
-    }
-
-    //Set var num1 or num2
-    private void setNumber(int which, String input)
+    //Save the number that is shown on screen to a file
+    private void saveNum()
     {
         try
         {
-            int number = Integer.parseInt(input);
-
-            if (which == 1) //Which number -> num1 or num2
-                num1 = number;
+            if (calc.getOperation() == null)
+            {
+                calc.setNumber(1,textViewCalc.getText().toString());
+                //Save output to output
+                if (!FileIOHelper.saveToFile(calc.getOp1().toString()))
+                    showError("Could not save!");
+            }
             else
-                num2 = number;
+            {
+                showError("You can only save a number! Not a whole operation");
+            }
         }
         catch (NumberFormatException ex)
         {
-            throw ex;
+            showError("Could not save! The number you try to save is invalid!");
         }
-    }
-
-    //Set the calculation operation to the newOperation
-    private void setOperation(String newOp)
-    {
-        //If input was made
-        if (textViewCalc.getText().length() > 0)
+        catch (Exception ex)
         {
-            String text = textViewCalc.getText().toString();
-            //No operation has been set before
-            if (operation == null)
-            {
-                operation = newOp;
-                try
-                {
-                    setNumber(1, text);
-                    setOperationText();
-                }
-                catch (NumberFormatException ex)
-                {
-                    showError("Invalid number inputted!");
-                    //clearText();
-                }
-                catch (Exception ex)
-                {
-                    showError("Input is not valid!");
-                    //clearText();
-                }
-            }
-            else
-            {
-                //When the textView does not contain any operation set new one
-                if (!textViewCalc.getText().toString().contains(operation))
-                {
-                    operation = newOp;
-                    try
-                    {
-                        setNumber(1, text);
-                        setOperationText();
-                    }
-                    catch (NumberFormatException ex)
-                    {
-                        showError("Invalid number inputted!");
-                        //clearText();
-                    }
-                    catch (Exception ex)
-                    {
-                        showError("Input is not valid!");
-                        //clearText();
-                    }
-                }
-                //else do not set new operation
-            }
+            showError("Could not save! " + ex.getMessage());
         }
-        else
+    }
+
+    //Load the saved number from the file and display it
+    private void loadNum()
+    {
+        try
         {
-            showError("You have not specified a number!");
+            String out = FileIOHelper.readFile(); //Read from file and save to string
+            if (textViewCalc.getText().toString() != "") //If input is there, append loaded string to input
+                textViewCalc.setText(textViewCalc.getText().toString() + out);
+            else //Set input text to loaded string
+                textViewCalc.setText(out);
         }
-    }
-
-    //Write operation to current calculation text
-    private void setOperationText()
-    {
-        textViewCalc.setText(textViewCalc.getText().toString()+operation);
-    }
-
-    //Clear textView
-    private void clearText()
-    {
-        textViewCalc.setText("");
-    }
-
-    //Calc result depending on operation
-    private int calcResult()
-    {
-        switch (operation)
+        catch (FileNotFoundException noFileEX)
+        {                                                               //Hide detailed exMessage
+            showError("No file was found! Try saving a number first! ");// + noFileEX.getMessage());
+        }
+        catch (Exception ex)
         {
-            case add:
-                return num1+num2;
-            case sub:
-                return num1-num2;
-            case div:
-                return num1/num2;
-            default:
-                return num1*num2;
+            showError("Could not read! " + ex.getMessage());
         }
     }
 
-    //Set all calculation vars to null
-    private void resetVars()
-    {
-        num1 = null;
-        num2 = null;
-        operation = null;
-    }
-
-    //Delete last inputted char
-    private void del()
-    {
-        int length = textViewCalc.length();
-        //If characters are there to delete
-        if (length > 0)
-        {
-            String text = textViewCalc.getText().subSequence(0, textViewCalc.getText().length() - 1).toString();
-            textViewCalc.setText(text);
-        }
-    }
 
     //Show error messages with Toast
-    private void showError(String error)
+    public void showError(String error)
     {
         Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }

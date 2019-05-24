@@ -21,14 +21,15 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
     private static final String TAG = "UpdateApp";
 
 
-    public void setContext(Context contextf)
+    public void setContext(Context context)
     {
-        context = contextf;
+        this.context = context;
     }
 
     @Override
     protected Void doInBackground(String... uri) {
 
+        //Download and install the application
         downloadAndInstall(uri[0]);
         return null;
     }
@@ -99,8 +100,6 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             //Prompt user to install app
             context.startActivity(intent);
-
-
         }
         catch (Exception ex)
         {
