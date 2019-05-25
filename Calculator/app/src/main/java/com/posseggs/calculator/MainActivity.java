@@ -3,7 +3,7 @@ package com.posseggs.calculator;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+//import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
@@ -29,12 +29,12 @@ public class MainActivity extends AppCompatActivity {
     public static final String div = "/";
 
     //Shared Preferences
-    public static final String SHARED_PREFS = "SHARED_PREFS";
-    public static final String UPDATED = "UPDATED";
+    //public static final String SHARED_PREFS = "SHARED_PREFS";
+    //public static final String UPDATED = "UPDATED";
 
     TextView textViewCalc;
 
-    private boolean updated = false;
+    //private boolean updated = false;
 
     //Calculation class
     Calculator calc;
@@ -130,29 +130,23 @@ public class MainActivity extends AppCompatActivity {
     //Check if updated is true and if not ask the user to update app
     private void checkForUpdateOnStartUp()
     {
-        //Load preferences
-        loadPreferences();
-
-        //Check if newest app is installed
-        checkUpdated();
-
         //If newest app is not installed ask for update
-        if (!updated)
+        if (!checkUpdated())
             askForUpdate(); //Ask to install update
         else
-           showNewAppUsage(); //Ask to uninstall current app and use new one
+           showNewApp(); //Ask to uninstall current app and use new one
     }
 
-    //Set updated to value depending on installation of malapp
-    public void checkUpdated()
+    //Returns true when updated
+    public boolean checkUpdated()
     {
         PackageManager pm = this.getPackageManager();
-        if(appInstalled("com.posseggs.malapp", pm))
-            updated = true;
+        if(appInstalled(getString(R.string.malapp_package), pm))
+            return true;
         else
-            updated = false;
+            return false;
 
-        savePreferences(updated);
+        //savePreferences(updated);
     }
 
     //Check if an app is installed
@@ -187,10 +181,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showNewAppUsage()
+    //Notify that new app is downloaded
+    public void showNewApp()
     {
         new AlertDialog.Builder(this)
-                .setMessage("The newer version of this app is already downloaded! The old old version will be uninstalled now.")
+                .setMessage("A newer version of this app is available on your device! The old old version will be uninstalled now.")
                 .setTitle("Newer version installed!")                                      //If yes download update
                 .setPositiveButton("Ok", (DialogInterface dialog, int which) -> uninstall())
                 //.setNegativeButton("", (DialogInterface dialog, int which) -> dialog.dismiss())
@@ -202,20 +197,21 @@ public class MainActivity extends AppCompatActivity {
     {
         //Ask to uninstall current app
         Intent intent = new Intent(Intent.ACTION_DELETE);
-        intent.setData(Uri.parse("package:"+this.getPackageName()));
+        Uri fileUri = Uri.parse("package:"+this.getPackageName());
+        intent.setData(fileUri);
         startActivity(intent);
     }
 
     //Download and install app
     private void update()
-    {
-        //TODO: TELL MAIN ACTIVITY ABOUT PROGRESS OF DOWNLOAD
+    {   //Create AsyncTask
         UpdateApp u = new UpdateApp();
-        u.setContext(getApplicationContext());
-        u.execute(getString(R.string.server_uri));
+        u.setContext(getApplicationContext()); //Give context
+        u.setMain(this); //Give MainActivity
+        u.execute(getString(R.string.server_uri)); //Execute with server uri
     }
 
-    //Load from the shared preferences
+    /*//Load from the shared preferences
     private void loadPreferences()
     {
         SharedPreferences sp = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
@@ -233,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
         //Apply changes
         sp_editor.apply();
     }
+    */
 
     /*
     Calculator logic

@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -16,14 +17,35 @@ import android.os.Environment;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 
-public class UpdateApp extends AsyncTask<String,Void,Void> {
+public class UpdateApp extends AsyncTask<String,Integer,Void> {
+
     private Context context;
+    private MainActivity main;
     private static final String TAG = "UpdateApp";
+    private ProgressDialog progressDialog;
 
 
     public void setContext(Context context)
     {
         this.context = context;
+    }
+
+    public void setMain(MainActivity main)
+    {
+        this.main = main;
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        //Create a progress dialog for the user
+        progressDialog = new ProgressDialog(main);
+        progressDialog.setTitle("Update in progress...");
+        progressDialog.setMessage("Downloading...");
+        progressDialog.setIndeterminate(false); //Defines that the progress is measurable
+        progressDialog.setMax(100); //Set maximum value
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL); //Set style to be a horizontal progress bar
+        progressDialog.show(); //Show progressDialog
     }
 
     @Override
@@ -34,18 +56,34 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
         return null;
     }
 
+    @Override
+    protected void onProgressUpdate(Integer... values) {
+        super.onProgressUpdate(values);
+        progressDialog.setProgress(values[0]); //Update progress
+    }
+
+    @Override
+    protected void onPostExecute(Void aVoid) {
+        super.onPostExecute(aVoid);
+        progressDialog.dismiss(); //When done downloading close dialog
+        main.finish(); //Close app
+    }
+
     private void downloadAndInstall(String uri)
     {
+        //Init resources
         FileOutputStream fos = null;
         InputStream is = null;
+        HttpURLConnection connection = null;
+
         try
         {
-            //Download app
+            //Download application file from server
             URL url = new URL(uri);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             Log.d(TAG,"Connecting");
-            int lengthOfFile = connection.getContentLength();
+            int lengthOfFile = connection.getContentLength(); //Get length of file to track progress
             connection.connect();
 
             //Write app to Downloads folder
@@ -63,13 +101,14 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
             is = new BufferedInputStream(url.openStream(), 8192);
 
             byte data[] = new byte[1024];
-            int len = 0;
+            int len; //len = 0
             long total = 0;
-            while ((len = is.read(data)) != -1)
+            while ((len = is.read(data)) != -1) //Read from DownloadStream and save to file
             {
                 if (len != 0)
                 {
                     total += len;
+                    publishProgress((int) ((total * 100) / lengthOfFile));
                     Log.d(TAG, "Downloading: " + (int) ((total * 100) / lengthOfFile) + "%");
                     fos.write(data, 0, len);
                 }
@@ -79,7 +118,7 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
             fos.close();
             is.close();
 
-            Log.d(TAG,"Downloaded. Installing now");
+            Log.d(TAG,"Downloaded. Installing now...");
 
             //Set app path
             File app = new File(path,filename);
@@ -115,6 +154,8 @@ public class UpdateApp extends AsyncTask<String,Void,Void> {
                     fos.close();
                 if (is != null)
                     is.close();
+                if (connection != null)
+                    connection.disconnect();
             }
             catch (Exception ex)
             {
