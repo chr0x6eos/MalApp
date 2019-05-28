@@ -3,7 +3,6 @@ package com.posseggs.calculator;
 import android.content.Context;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import java.io.FileNotFoundException;
 
 import static com.posseggs.calculator.MainActivity.add;
