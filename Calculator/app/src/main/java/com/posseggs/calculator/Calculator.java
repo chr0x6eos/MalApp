@@ -4,6 +4,8 @@ import android.content.Context;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.FileNotFoundException;
+
 import static com.posseggs.calculator.MainActivity.add;
 import static com.posseggs.calculator.MainActivity.div;
 import static com.posseggs.calculator.MainActivity.sub;
@@ -12,28 +14,16 @@ public class Calculator
 {
 
     private TextView calculation;
-    private String operation;
+    private String operation = null;
     private Integer op1 = null; //First operand
     private Integer op2 = null; //Second operand
 
     private Context context;
 
     //Constructor
-    public Calculator(Context main, TextView textView)
-    {
+    public Calculator(Context main, TextView textView) {
         context = main; //Get context
         calculation = textView; //Set textView
-    }
-
-    //Return operation
-    public String getOperation()
-    {
-        return operation;
-    }
-
-    //Return first operand
-    public Integer getOp1() {
-        return op1;
     }
 
     //Do logic if an operation button was pressed:
@@ -43,8 +33,128 @@ public class Calculator
         setOperation(operation);
     }
 
+    //Calculate result and set textView to the result
+    public void calcOutput()
+    {
+        //If an operation has been set
+        if (operation != null)
+        {
+            //If first number has been defined
+            if (op1 != null)
+            {
+                try
+                {
+                    //Get second number from whole input
+                    String value2 = calculation.getText().toString();
+                    value2 = value2.substring(value2.lastIndexOf(operation) + 1);
+
+                    //Second number is valid
+                    if (!value2.isEmpty())
+                    {
+                        //Set second number
+                        setNumber(2, value2);
+                        //Calculate result
+                        int result = calcResult();
+                        calculation.setText(result+""); //Give result to textView
+                        //Reset numbers and operation
+                        resetVars();
+                    }
+                    else
+                    {
+                        showError("You did not define the second number!");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    showError("Could not calculate: " + ex.getMessage());
+                }
+            }
+            else
+            {
+                showError("You did not define a number!");
+            }
+        }
+        else
+        {
+            showError("You did not define an operation!");
+        }
+    }
+
+    //Update textView to number
+    public void updateText(int num)
+    {
+        setNumText(num);
+    }
+
+    //Clear textView and reset vars
+    public void clear()
+    {
+        calculation.setText("");
+        resetVars();
+    }
+
+    //Delete last inputted char
+    public void del()
+    {
+        int length = calculation.length();
+        //If characters are there to delete
+        if (length > 0)
+        {
+            String text = calculation.getText().subSequence(0, calculation.getText().length() - 1).toString();
+            calculation.setText(text);
+        }
+    }
+
+    //Save the number that is shown on screen to a file
+    public void saveNum()
+    {
+        try
+        {
+            if (operation == null)
+            {
+                setNumber(1,calculation.getText().toString());
+                //Save output to output
+                if (!FileIOHelper.saveToFile(op1.toString()))
+                    showError("Could not save!");
+            }
+            else
+            {
+                showError("You can only save a number! Not a whole operation");
+            }
+        }
+        catch (NumberFormatException ex)
+        {
+            showError("Could not save! The number you try to save is invalid!");
+        }
+        catch (Exception ex)
+        {
+            showError("Could not save! " + ex.getMessage());
+        }
+    }
+
+    //Load the saved number from the file and display it
+    public void loadNum()
+    {
+        try
+        {
+            String out = FileIOHelper.readFile(); //Read from file and save to string
+            if (calculation.getText().toString() != "") //If input is there, append loaded string to input
+                calculation.setText(calculation.getText().toString() + out);
+            else //Set input text to loaded string
+                calculation.setText(out);
+        }
+        catch (FileNotFoundException noFileEX)
+        {                                                               //Hide detailed exMessage
+            showError("No file was found! Try saving a number first! ");// + noFileEX.getMessage());
+        }
+        catch (Exception ex)
+        {
+            showError("Could not read! " + ex.getMessage());
+        }
+    }
+
     //Set op1 or op2 depending on input
-    public void setNumber(int which, String input)
+    private void setNumber(int which, String input)
     {
         try
         {
@@ -62,7 +172,7 @@ public class Calculator
     }
 
     //Set the calculation operation to the newOperation
-    public void setOperation(String newOp)
+    private void setOperation(String newOp)
     {
         //If input was made
         if (calculation.getText().length() > 0)
@@ -121,7 +231,7 @@ public class Calculator
     }
 
     //Calc result depending on operation
-    public int calcResult()
+    private int calcResult()
     {
         switch (operation)
         {
@@ -136,93 +246,28 @@ public class Calculator
         }
     }
 
-    //Calculate result and set textView to the result
-    public void calcOutput()
-    {
-        //If an operation has been set
-        if (getOperation() != null)
-        {
-            //If first number has been defined
-            if (op1 != null)
-            {
-                try
-                {
-                    //Get second number from whole input
-                    String value2 = calculation.getText().toString();
-                    value2 = value2.substring(value2.lastIndexOf(operation) + 1);
-
-                    //Second number is valid
-                    if (!value2.isEmpty())
-                    {
-                        //Set second number
-                        setNumber(2, value2);
-                        //Calculate result
-                        int result = calcResult();
-                        calculation.setText(result + "");
-                        //Reset numbers and operation
-                        resetVars();
-                    }
-                    else
-                    {
-                        showError("You did not define the second number!");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    showError("Could not calculate: " + ex.getMessage());
-                }
-            }
-            else
-            {
-                showError("You did not define a number!");
-            }
-        }
-        else
-        {
-            showError("You did not define an operation!");
-        }
-    }
-
-    //Set all calculation vars to null
-    public void resetVars()
+    //Reset all calculation vars
+    private void resetVars()
     {
         op1 = null;
         op2 = null;
         operation = null;
     }
 
-    //Clear textView
-    public void clearText()
-    {
-        calculation.setText("");
-    }
-
-    //Update textView to number
-    public void updateText(int num)
-    {
-        calculation.setText(calculation.getText().toString() + num);
-    }
-
-    //Delete last inputted char
-    public void del()
-    {
-        int length = calculation.length();
-        //If characters are there to delete
-        if (length > 0)
-        {
-            String text = calculation.getText().subSequence(0, calculation.getText().length() - 1).toString();
-            calculation.setText(text);
-        }
-    }
-
     //Write operation to current calculation text
-    public void setOperationText()
+    private void setOperationText()
     {
         calculation.setText(calculation.getText().toString()+operation);
     }
 
+    //Write number to current calculation text
+    private void setNumText(int num)
+    {
+        calculation.setText(calculation.getText().toString() + num);
+    }
+
     //Show error messages with Toast
-    public void showError(String error)
+    private void showError(String error)
     {
         Toast.makeText(context, error, Toast.LENGTH_LONG).show();
     }

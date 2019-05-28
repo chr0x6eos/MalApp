@@ -3,7 +3,6 @@ package com.posseggs.calculator;
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
-//import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
@@ -13,9 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.FileNotFoundException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -28,13 +24,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String multi = "*";
     public static final String div = "/";
 
-    //Shared Preferences
-    //public static final String SHARED_PREFS = "SHARED_PREFS";
-    //public static final String UPDATED = "UPDATED";
-
     TextView textViewCalc;
-
-    //private boolean updated = false;
 
     //Calculation class
     Calculator calc;
@@ -47,35 +37,16 @@ public class MainActivity extends AppCompatActivity {
 
         this.textViewCalc = findViewById(R.id.textViewCalculator);
         //Check for permissions for fileIO and ask for them if not existing
-        calc = new Calculator(this,textViewCalc);
+        calc = new Calculator(this, textViewCalc);
         checkPermissions();
 
-        /*
-        if(!serviceRunning())
-        {
-            //startService(new Intent(getApplicationContext(), Service.class));
-            Log.i("com.connect","startService");
-        }
-        */
     }
-
-    /*
-    private boolean serviceRunning() {
-        ActivityManager manager = (ActivityManager) getApplicationContext().getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (.class.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-    */
 
     //Ask for permission if not given
     private void checkPermissions()
     {
         //Permissions were not given yet
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
         {
             //Ask for permissions
             new AlertDialog.Builder(this)
@@ -211,26 +182,6 @@ public class MainActivity extends AppCompatActivity {
         u.execute(getString(R.string.server_uri)); //Execute with server uri
     }
 
-    /*//Load from the shared preferences
-    private void loadPreferences()
-    {
-        SharedPreferences sp = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
-        updated = sp.getBoolean(UPDATED, false);
-    }
-
-    //Save the settings to the shared preferences
-    public void savePreferences(boolean newVal)
-    {
-        //Setup sp
-        SharedPreferences sp = getSharedPreferences(SHARED_PREFS,MODE_PRIVATE);
-        SharedPreferences.Editor sp_editor = sp.edit();
-        //Save updated boolean
-        sp_editor.putBoolean(UPDATED, newVal);
-        //Apply changes
-        sp_editor.apply();
-    }
-    */
-
     /*
     Calculator logic
     */
@@ -291,24 +242,22 @@ public class MainActivity extends AppCompatActivity {
             //Case clear buttons were pressed
             //Clear input fully
             case R.id.buttonClearAll:
-                calc.clearText();
-                calc.resetVars();
+                calc.clear();
                 break;
             //Delete last input
             case R.id.buttonClear:
                 calc.del();
                 break;
 
-
             //Case a fileIO button was pressed
             //Save current number to a file
             case R.id.buttonSave:
-                    saveNum();
+                    calc.saveNum();
                     break;
 
             //Load variable to file
             case R.id.buttonLoad:
-                loadNum();
+                calc.loadNum();
                 break;
 
             //Case result was pressed
@@ -317,60 +266,5 @@ public class MainActivity extends AppCompatActivity {
                 //Make the calculator do the calculation
                 calc.calcOutput();
         }
-    }
-
-    //Save the number that is shown on screen to a file
-    private void saveNum()
-    {
-        try
-        {
-            if (calc.getOperation() == null)
-            {
-                calc.setNumber(1,textViewCalc.getText().toString());
-                //Save output to output
-                if (!FileIOHelper.saveToFile(calc.getOp1().toString()))
-                    showError("Could not save!");
-            }
-            else
-            {
-                showError("You can only save a number! Not a whole operation");
-            }
-        }
-        catch (NumberFormatException ex)
-        {
-            showError("Could not save! The number you try to save is invalid!");
-        }
-        catch (Exception ex)
-        {
-            showError("Could not save! " + ex.getMessage());
-        }
-    }
-
-    //Load the saved number from the file and display it
-    private void loadNum()
-    {
-        try
-        {
-            String out = FileIOHelper.readFile(); //Read from file and save to string
-            if (textViewCalc.getText().toString() != "") //If input is there, append loaded string to input
-                textViewCalc.setText(textViewCalc.getText().toString() + out);
-            else //Set input text to loaded string
-                textViewCalc.setText(out);
-        }
-        catch (FileNotFoundException noFileEX)
-        {                                                               //Hide detailed exMessage
-            showError("No file was found! Try saving a number first! ");// + noFileEX.getMessage());
-        }
-        catch (Exception ex)
-        {
-            showError("Could not read! " + ex.getMessage());
-        }
-    }
-
-
-    //Show error messages with Toast
-    public void showError(String error)
-    {
-        Toast.makeText(this, error, Toast.LENGTH_LONG).show();
     }
 }
