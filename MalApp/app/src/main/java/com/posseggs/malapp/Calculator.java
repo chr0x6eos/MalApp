@@ -1,4 +1,4 @@
-package com.posseggs.calculator;
+package com.posseggs.malapp;
 
 import android.content.Context;
 import android.widget.TextView;
@@ -18,6 +18,8 @@ public class Calculator
     private String operation = null;
     private Integer op1 = null; //First operand
     private Integer op2 = null; //Second operand
+
+    private String fileName = "calculation.txt";
 
     private Context context;
 
@@ -115,7 +117,7 @@ public class Calculator
             {
                 setNumber(1,calculation.getText().toString());
                 //Save output to output
-                if (!FileIOHelper.saveToFile(op1.toString()))
+                if (!FileIOHelper.saveToFile(fileName,op1.toString()))
                     showError("Could not save!");
             }
             else
@@ -138,7 +140,7 @@ public class Calculator
     {
         try
         {
-            String out = FileIOHelper.readFile(); //Read from file and save to string
+            String out = FileIOHelper.readFile(fileName); //Read from file and save to string
             if (calculation.getText().toString() != "") //If input is there, append loaded string to input
                 calculation.setText(calculation.getText().toString() + out);
             else //Set input text to loaded string

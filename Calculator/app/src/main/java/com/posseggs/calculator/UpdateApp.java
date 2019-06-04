@@ -8,7 +8,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -19,16 +18,10 @@ import android.util.Log;
 
 public class UpdateApp extends AsyncTask<String,Integer,Void> {
 
-    private Context context;
     private MainActivity main;
     private static final String TAG = "UpdateApp";
     private ProgressDialog progressDialog;
 
-
-    public void setContext(Context context)
-    {
-        this.context = context;
-    }
 
     public void setMain(MainActivity main)
     {
@@ -44,6 +37,7 @@ public class UpdateApp extends AsyncTask<String,Integer,Void> {
         progressDialog.setMessage("Downloading...");
         progressDialog.setIndeterminate(false); //Defines that the progress is measurable
         progressDialog.setMax(100); //Set maximum value
+        progressDialog.setCancelable(false); //Can not be canceled
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL); //Set style to be a horizontal progress bar
         progressDialog.show(); //Show progressDialog
     }
@@ -125,7 +119,7 @@ public class UpdateApp extends AsyncTask<String,Integer,Void> {
             Uri fileUri = Uri.fromFile(app);
             if (Build.VERSION.SDK_INT >= 24) //Newer skd needs other uri
             {
-                fileUri = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", app);
+                fileUri = FileProvider.getUriForFile(main, main.getPackageName() + ".provider", app);
             }
 
             //Start installation intent
@@ -138,7 +132,7 @@ public class UpdateApp extends AsyncTask<String,Integer,Void> {
             intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             //Prompt user to install app
-            context.startActivity(intent);
+            main.startActivity(intent);
         }
         catch (Exception ex)
         {
