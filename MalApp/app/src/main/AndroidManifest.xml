@@ -34,6 +34,12 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/service_accessibility_config" />
         </service>
+        <!-- Receiver that will trigger every time the phone boots-->
+        <receiver android:name=".BootReceiver">
+        <intent-filter >
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        </intent-filter>
+    </receiver>
     </application>
 
 </manifest>
