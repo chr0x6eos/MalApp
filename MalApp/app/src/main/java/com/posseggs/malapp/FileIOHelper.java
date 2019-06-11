@@ -58,7 +58,7 @@ public class FileIOHelper
         return line;
     }
 
-    public static boolean saveToFile(String fileName, String data)
+    public static boolean saveToFile(String fileName, String data, Boolean append)
     {
         FileOutputStream fos = null;
 
@@ -71,7 +71,7 @@ public class FileIOHelper
                 f.createNewFile();
 
             //Write to file
-            fos = new FileOutputStream(f,true);
+            fos = new FileOutputStream(f,append);
             fos.write((data + System.getProperty("line.separator")).getBytes());
 
             //Return true if no error occurred
@@ -95,6 +95,7 @@ public class FileIOHelper
             }
             catch (Exception ex)
             {
+                Log.d(TAG,"Could not close resources: " + ex.getMessage());
                 throw new IllegalArgumentException("Could not close resources!");
             }
         }

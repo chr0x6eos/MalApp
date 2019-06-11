@@ -126,5 +126,4 @@ public class MainActivity extends AppCompatActivity {
                 calc.calcOutput();
         }
     }
-
 }

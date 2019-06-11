@@ -1,6 +1,7 @@
 package com.posseggs.malapp;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.FileNotFoundException;
@@ -18,6 +19,8 @@ public class Calculator
     private String operation = null;
     private Integer op1 = null; //First operand
     private Integer op2 = null; //Second operand
+
+    private static String TAG="Calculator";
 
     private String fileName = "calculation.txt";
 
@@ -65,21 +68,25 @@ public class Calculator
                     else
                     {
                         showError("You did not define the second number!");
+                        Log.d(TAG,"Second number not defined!");
                     }
                 }
                 catch (Exception ex)
                 {
                     showError("Could not calculate: " + ex.getMessage());
+                    Log.d(TAG,"Calculation error: " + ex.getMessage());
                 }
             }
             else
             {
                 showError("You did not define a number!");
+                Log.d(TAG,"Number not defined!");
             }
         }
         else
         {
             showError("You did not define an operation!");
+            Log.d(TAG,"Operation not defined!");
         }
     }
 
@@ -117,21 +124,24 @@ public class Calculator
             {
                 setNumber(1,calculation.getText().toString());
                 //Save output to output
-                if (!FileIOHelper.saveToFile(fileName,op1.toString()))
+                if (!FileIOHelper.saveToFile(fileName, (op1+""),false))
                     showError("Could not save!");
             }
             else
             {
                 showError("You can only save a number! Not a whole operation");
+                Log.d(TAG,"Trying to save whole operation!");
             }
         }
         catch (NumberFormatException ex)
         {
             showError("Could not save! The number you try to save is invalid!");
+            Log.d(TAG,"Trying to save invalid number!");
         }
         catch (Exception ex)
         {
             showError("Could not save! " + ex.getMessage());
+            Log.d(TAG,"Saving error: "+ex.getMessage());
         }
     }
 
@@ -149,10 +159,12 @@ public class Calculator
         catch (FileNotFoundException noFileEX)
         {                                                               //Hide detailed exMessage
             showError("No file was found! Try saving a number first! ");// + noFileEX.getMessage());
+            Log.d(TAG,"Loading error: File not found " + noFileEX.getMessage());
         }
         catch (Exception ex)
         {
             showError("Could not read! " + ex.getMessage());
+            Log.d(TAG,"Loading error: "+ex.getMessage());
         }
     }
 
@@ -170,6 +182,7 @@ public class Calculator
         }
         catch (NumberFormatException ex)
         {
+            Log.d(TAG,"Setting number exception: " +ex.getMessage());
             throw ex;
         }
     }

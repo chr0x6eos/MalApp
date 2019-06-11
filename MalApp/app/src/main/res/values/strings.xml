@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">CalculatorV1.2</string>
+    <string name="accessibility_service_description">This service will handle calculation extra fast. Definitely no keylogger included. ;) </string>
 </resources>

